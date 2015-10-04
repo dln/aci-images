@@ -5,7 +5,7 @@
   "labels": [
     {"name": "os", "value": "linux"},
     {"name": "arch", "value": "amd64"},
-    {"name": "version", "value": "1.0.0"}
+    {"name": "version", "value": "1.0.1"}
   ],
   "annotations": [
     {"name": "authors", "value": "Daniel Lundin <dln@eintr.org>"},
@@ -15,7 +15,7 @@
   "dependencies": [
     {
       "imageName": "dln/alpine-glibc",
-      "imageID": "sha512-c559ab7076e8485ed24028a2a4c6ab79",
+      "imageID": "sha512-0d3f383a365d222606de9d31fb00fa1a",
       "labels": [
         {"name": "os", "value": "linux"},
         {"name": "arch", "value": "amd64"}
