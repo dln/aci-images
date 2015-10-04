@@ -3,7 +3,7 @@ set -ex
 
 alpine_version=3.2
 
-aci_build=1
+aci_build=2
 aci_version=${alpine_version}-${aci_build}
 
 apk_mirror=http://nl.alpinelinux.org/alpine
@@ -48,7 +48,7 @@ function setup_packages() {
 
   # Install glibc
   curl -L -o ${chroot_dir}/tmp/glibc.apk ${glibc_apk_url}
-  enter apk --update add ca-certificates
+  enter apk --update add bash ca-certificates
   enter apk add --allow-untrusted /tmp/glibc.apk
   rm -f ${chroot_dir}/tmp/glibc.apk
 }
