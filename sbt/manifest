@@ -1,0 +1,47 @@
+{
+  "acKind": "ImageManifest",
+  "acVersion": "0.7.0",
+  "name": "dln/sbt",
+  "labels": [
+    {"name": "os", "value": "linux"},
+    {"name": "arch", "value": "amd64"},
+    {"name": "version", "value": "1.0.0"}
+  ],
+  "annotations": [
+    {"name": "authors", "value": "Daniel Lundin <dln@eintr.org>"},
+    {"name": "created", "value": "2015-10-04T21:22:42Z"},
+    {"name": "description", "value": "The simple/scala/standard build tool"}
+  ],
+  "dependencies": [
+    {
+      "imageName": "dln/alpine-glibc",
+      "imageID": "sha512-c559ab7076e8485ed24028a2a4c6ab79",
+      "labels": [
+        {"name": "os", "value": "linux"},
+        {"name": "arch", "value": "amd64"}
+      ]
+    },
+    {
+      "imageName": "dln/java8-oracle",
+      "imageID": "sha512-15d2d6577d6b3c370ba4fc5663d890adabb7aa6a296c5ecc71838dc3fb71e467",
+      "labels": [
+        {"name": "os", "value": "linux"},
+        {"name": "arch", "value": "amd64"}
+      ]
+    }
+  ],
+  "app": {
+    "exec": ["/usr/bin/sbt"],
+    "user": "0",
+    "group": "0",
+    "workingDirectory": "/work",
+    "mountPoints": [
+      {"name": "work", "path": "/work"},
+      {"name": "home", "path": "/root"}
+    ],
+    "environment": [
+      {"name": "JAVA_HOME", "value": "/usr/lib/jvm/java-8-oracle"}
+    ]
+  }
+}
+
