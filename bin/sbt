@@ -1,0 +1,9 @@
+#!/bin/bash
+exec sudo rkt run \
+  --insecure-skip-verify \
+  --local \
+  --interactive \
+  --volume resolv-conf,kind=host,source=/etc/resolv.conf \
+  --volume work,kind=host,source=$PWD \
+  --volume home,kind=host,source=$HOME \
+  dln/sbt -- "$@"
