@@ -5,7 +5,7 @@
   "labels": [
     {"name": "os", "value": "linux"},
     {"name": "arch", "value": "amd64"},
-    {"name": "version", "value": "1.0.1"}
+    {"name": "version", "value": "1.0.3"}
   ],
   "annotations": [
     {"name": "authors", "value": "Daniel Lundin <dln@eintr.org>"},
@@ -15,7 +15,7 @@
   "dependencies": [
     {
       "imageName": "dln/alpine-glibc",
-      "imageID": "sha512-0d3f383a365d222606de9d31fb00fa1a",
+      "imageID": "sha512-8d51d61dfc19e7691ebeaa67154288fe",
       "labels": [
         {"name": "os", "value": "linux"},
         {"name": "arch", "value": "amd64"}
@@ -38,6 +38,14 @@
     "mountPoints": [
       {"name": "work", "path": "/work"},
       {"name": "home", "path": "/root"}
+    ],
+    "eventHandlers": [
+      {
+        "name": "pre-start",
+        "exec": [
+          "/usr/sbin/ac_init_helper"
+        ]
+      }
     ],
     "environment": [
       {"name": "JAVA_HOME", "value": "/usr/lib/jvm/java-8-oracle"}

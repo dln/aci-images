@@ -3,7 +3,7 @@ set -ex
 
 alpine_version=3.2
 
-aci_build=3
+aci_build=6
 aci_version=${alpine_version}-${aci_build}
 
 apk_mirror=http://nl.alpinelinux.org/alpine
@@ -36,10 +36,27 @@ function setup_devices() {
   mknod -m 666 ${chroot_dir}/dev/tty c 5 0
 }
 
-function setup_resolvconf() {
-  echo 'nameserver 127.0.0.1'       > ${chroot_dir}/etc/resolv.conf
-  echo 'nameserver 8.8.8.8'         >> ${chroot_dir}/etc/resolv.conf
-  echo 'nameserver 169.254.169.253' >> ${chroot_dir}/etc/resolv.conf
+function setup_netconf() {
+  cat >${chroot_dir}/etc/resolv.conf <<EOF
+nameserver 127.0.0.1
+nameserver 8.8.8.8
+nameserver 169.254.169.253
+EOF
+
+  cat >${chroot_dir}/etc/nsswitch.conf <<EOF
+passwd:         compat
+group:          compat
+shadow:         compat
+hosts:          files mdns4_minimal [NOTFOUND=return] dns
+networks:       files
+protocols:      db files
+services:       db files
+ethers:         db files
+rpc:            db files
+netgroup:       nis
+EOF
+
+  chmod 666 ${chroot_dir}/etc/hosts
 }
 
 function setup_packages() {
@@ -53,6 +70,13 @@ function setup_packages() {
   rm -f ${chroot_dir}/tmp/glibc.apk
 }
 
+function setup_init_helper() {
+  cat >${chroot_dir}/usr/sbin/ac_init_helper <<EOF
+#!/bin/sh
+echo "127.0.0.1 \$HOSTNAME localhost localhost.localdomain" >/etc/hosts
+EOF
+  chmod +x ${chroot_dir}/usr/sbin/ac_init_helper
+}
 
 function enter() {
   mount -t proc none ${chroot_dir}/proc
@@ -67,8 +91,9 @@ mkdir -p ${chroot_dir}
 curl ${apk_mirror}/v${alpine_version}/main/x86_64/apk-tools-static-2.6.3-r0.apk | tar xz
 ./sbin/apk.static -X ${apk_mirror}/v${alpine_version}/main -U --allow-untrusted --root ${chroot_dir} --initdb add alpine-base
 
-setup_resolvconf
+setup_netconf
 setup_packages
+setup_init_helper
 
 cat >${work_dir}/manifest <<EOF
 {
