@@ -1,10 +1,12 @@
 #!/bin/bash
-set -ex
+set -e
 
 alpine_version=3.2
 
-aci_build=6
+aci_build=7
 aci_version=${alpine_version}-${aci_build}
+
+aci_output=alpine-glibc.aci
 
 apk_mirror=http://nl.alpinelinux.org/alpine
 glibc_apk_url=https://circle-artifacts.com/gh/andyshinn/alpine-pkg-glibc/6/artifacts/0/home/ubuntu/alpine-pkg-glibc/packages/x86_64/glibc-2.21-r2.apk
@@ -12,37 +14,28 @@ glibc_apk_url=https://circle-artifacts.com/gh/andyshinn/alpine-pkg-glibc/6/artif
 
 [ "$UID" == "0" ] || (echo "Must run as root." ; exit 1)
 
-
 work_dir=$(mktemp -d /tmp/aci-apk-glibc-tmp.XXXXXX)
-chroot_dir=${work_dir}/rootfs
+aci_dir=${work_dir}/layout
+chroot_dir=${aci_dir}/rootfs
 
 function cleanup {
-  unmount
-  rm -rf ${chroot_dir}
+  rm -rf ${work_dir}
 }
 trap cleanup EXIT
 
-function unmount() {
-  umount ${chroot_dir}/proc || true
-  umount ${chroot_dir}/sys || true
-}
-
-function setup_devices() {
-  mknod -m 666 ${chroot_dir}/dev/full c 1 7
-  mknod -m 666 ${chroot_dir}/dev/ptmx c 5 2
-  mknod -m 644 ${chroot_dir}/dev/random c 1 8
-  mknod -m 644 ${chroot_dir}/dev/urandom c 1 9
-  mknod -m 666 ${chroot_dir}/dev/zero c 1 5
-  mknod -m 666 ${chroot_dir}/dev/tty c 5 0
+function log() {
+  echo -e "\e[32m ** " $1 "\e[0m"
 }
 
 function setup_netconf() {
+  log "Creating initial resolv.conf"
   cat >${chroot_dir}/etc/resolv.conf <<EOF
 nameserver 127.0.0.1
 nameserver 8.8.8.8
 nameserver 169.254.169.253
 EOF
 
+  log "Creating nsswitch.conf"
   cat >${chroot_dir}/etc/nsswitch.conf <<EOF
 passwd:         compat
 group:          compat
@@ -56,21 +49,12 @@ rpc:            db files
 netgroup:       nis
 EOF
 
+  log "Preparing /etc/hosts"
   chmod 666 ${chroot_dir}/etc/hosts
 }
 
-function setup_packages() {
-  mkdir -p ${chroot_dir}/etc/apk
-  echo "${apk_mirror}/v${alpine_version}/main" > ${chroot_dir}/etc/apk/repositories
-
-  # Install glibc
-  curl -L -o ${chroot_dir}/tmp/glibc.apk ${glibc_apk_url}
-  enter apk --update add bash ca-certificates wget
-  enter apk add --allow-untrusted /tmp/glibc.apk
-  rm -f ${chroot_dir}/tmp/glibc.apk
-}
-
 function setup_init_helper() {
+  log "Creating ac_init_helper script"
   cat >${chroot_dir}/usr/sbin/ac_init_helper <<EOF
 #!/bin/sh
 echo "127.0.0.1 \$HOSTNAME localhost localhost.localdomain" >/etc/hosts
@@ -78,24 +62,35 @@ EOF
   chmod +x ${chroot_dir}/usr/sbin/ac_init_helper
 }
 
-function enter() {
-  mount -t proc none ${chroot_dir}/proc
-  mount -o bind /sys ${chroot_dir}/sys
-  cmdline=$@
-  chroot ${chroot_dir} /bin/sh -l -c "${cmdline}"
-  unmount
+function initialize() {
+  log "Initializing chroot: ${chroot_dir}"
+  mkdir -p ${aci_dir} ${chroot_dir}
+  mkdir -p ${chroot_dir}/etc/apk
 }
 
-test -d ${chroot_dir} && echo "${chroot_dir} already exists." && exit 1 
-mkdir -p ${chroot_dir}
-curl ${apk_mirror}/v${alpine_version}/main/x86_64/apk-tools-static-2.6.3-r0.apk | tar xz
-./sbin/apk.static -X ${apk_mirror}/v${alpine_version}/main -U --allow-untrusted --root ${chroot_dir} --initdb add alpine-base
+function setup_packages() {
+  log "Bootstrapping apk"
+  curl -s ${apk_mirror}/v${alpine_version}/main/x86_64/apk-tools-static-2.6.3-r0.apk | tar -C ${work_dir} -xz
 
-setup_netconf
-setup_packages
-setup_init_helper
+  log "Adding apk repositories"
+  echo "${apk_mirror}/v${alpine_version}/main" > ${chroot_dir}/etc/apk/repositories
 
-cat >${work_dir}/manifest <<EOF
+  log "Downloading glibc package"
+  curl -s -L -o ${work_dir}/glibc.apk ${glibc_apk_url}
+
+  log "Installing packages"
+  ${work_dir}/sbin/apk.static -X ${apk_mirror}/v${alpine_version}/main -U --allow-untrusted --root ${chroot_dir} --initdb add \
+    alpine-base \
+    bash \
+    ca-certificates \
+    curl \
+    wget \
+    ${work_dir}/glibc.apk
+}
+
+function write_manifest() {
+  log "Writing ACI manifest"
+  cat >${aci_dir}/manifest <<EOF
 {
   "acKind": "ImageManifest",
   "acVersion": "0.7.0",
@@ -112,5 +107,14 @@ cat >${work_dir}/manifest <<EOF
   ]
 }
 EOF
+}
 
-actool build --overwrite ${work_dir} alpine-glibc.${aci_version}.linux.amd64.aci
+
+initialize
+setup_packages
+setup_netconf
+setup_init_helper
+write_manifest
+actool build --overwrite ${aci_dir} ${aci_output}
+
+echo "All done => ${aci_output}"

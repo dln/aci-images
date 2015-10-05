@@ -15,7 +15,6 @@
   "dependencies": [
     {
       "imageName": "dln/alpine-glibc",
-      "imageID": "sha512-6f378330112dbbed9a01c0450fd40b7f06d391dcaa4e15262334f3e5a3378d3e",
       "labels": [
         {"name": "os", "value": "linux"},
         {"name": "arch", "value": "amd64"}
@@ -26,7 +25,17 @@
     "exec": ["/bin/sh"],
     "user": "0",
     "group": "0",
-    "workingDirectory": "/tmp"
+    "workingDirectory": "/tmp",
+    "mountPoints": [
+      {"name": "resolv-conf", "path": "/etc/resolv.conf"}
+    ],
+    "eventHandlers": [
+      {
+        "name": "pre-start", "exec": [
+          "/usr/sbin/ac_init_helper"
+        ]
+      }
+    ]
   }
 }
 
