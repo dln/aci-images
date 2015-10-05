@@ -10,7 +10,7 @@ write_manifest <<EOF
 {
   "acKind": "ImageManifest",
   "acVersion": "0.7.0",
-  "name": "dln/sh",
+  "name": "dln/bash",
   "labels": [
     {"name": "os", "value": "linux"},
     {"name": "arch", "value": "amd64"},
