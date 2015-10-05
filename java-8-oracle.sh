@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e
 
 java_version_major=8
 java_version_minor=60
@@ -7,6 +7,7 @@ java_version_build=27
 
 aci_build=1
 aci_version="${java_version_major}.${java_version_minor}.${java_version_build}-${aci_build}"
+aci_output=java-${java_version_major}-oracle.aci
 
 jdk_root=/usr/lib/jvm/java-${java_version_major}-oracle
 
@@ -20,21 +21,31 @@ function cleanup {
 }
 trap cleanup EXIT
 
+function log() {
+  echo -e "\e[32m ** " $1 "\e[0m"
+}
+
 jdk_dir=${chroot_dir}${jdk_root}
 
 jdk_url=http://download.oracle.com/otn-pub/java/jdk/${java_version_major}u${java_version_minor}-b${java_version_build}/jdk-${java_version_major}u${java_version_minor}-linux-x64.tar.gz
 
+log "Initializing"
 mkdir -p ${chroot_dir}/usr/lib/jvm/ 
 mkdir -p ${chroot_dir}/usr/bin
 
-curl -jkSLH "Cookie: oraclelicense=accept-securebackup-cookie" ${jdk_url} \
-  | tar -xz -C ${chroot_dir} --transform="s,jdk[^/]*,${jdk_root},"
+log "Downloading JDK distribution"
+log "All done => ${aci_output}"
+curl --progress-bar -jkSLH "Cookie: oraclelicense=accept-securebackup-cookie" ${jdk_url} \
+  | tar -xz -P --transform="s,jdk[^/]*,${chroot_dir}${jdk_root}," 
 
+log "Creating symlinks in /usr/bin/"
 find ${jdk_dir}/bin/ -type f -printf "%f\n" | xargs -I '{}' -n 1 ln -s ${jdk_root}/bin/{} ${chroot_dir}/usr/bin/{}
 
+log "Creating Centos symlinks for compatibility"
 mkdir -p ${chroot_dir}/usr/java
 ln -s ${jdk_root} ${chroot_dir}/usr/java/default
 
+log "Removing non-server JDK/JRE stuff to reduce weight"
 rm -rf \
   ${jdk_dir}/*src.zip \
   ${jdk_dir}/man \
@@ -58,11 +69,13 @@ rm -rf \
   ${jdk_dir}/jre/lib/amd64/libjavafx*.so \
   ${jdk_dir}/jre/lib/amd64/libjfx*.so
 
+
+log "Writing manifest"
 cat >${work_dir}/manifest <<EOF
 {
   "acKind": "ImageManifest",
   "acVersion": "0.7.0",
-  "name": "dln/java${java_version_major}-oracle",
+  "name": "dln/java-${java_version_major}-oracle",
   "labels": [
     {"name": "os", "value": "linux"},
     {"name": "arch", "value": "amd64"},
@@ -76,4 +89,7 @@ cat >${work_dir}/manifest <<EOF
 }
 EOF
 
-actool build ${work_dir} java${java_version_major}-oracle.${aci_version}.linux.amd64.aci
+log "Building ACI"
+actool build ${work_dir} ${aci_output}
+
+log "All done => ${aci_output}"

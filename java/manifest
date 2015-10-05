@@ -15,15 +15,13 @@
   "dependencies": [
     {
       "imageName": "dln/alpine-glibc",
-      "imageID": "sha512-6f378330112dbbed9a01c0450fd40b7f06d391dcaa4e15262334f3e5a3378d3e",
       "labels": [
         {"name": "os", "value": "linux"},
         {"name": "arch", "value": "amd64"}
       ]
     },
     {
-      "imageName": "dln/java8-oracle",
-      "imageID": "sha512-15d2d6577d6b3c370ba4fc5663d890adabb7aa6a296c5ecc71838dc3fb71e467",
+      "imageName": "dln/java-8-oracle",
       "labels": [
         {"name": "os", "value": "linux"},
         {"name": "arch", "value": "amd64"}
@@ -34,7 +32,10 @@
     "exec": ["/usr/bin/java"],
     "user": "0",
     "group": "0",
-    "workingDirectory": "/tmp"
+    "workingDirectory": "/tmp",
+    "mountPoints": [
+      {"name": "resolv-conf", "path": "/etc/resolv.conf"}
+    ]
   }
 }
 

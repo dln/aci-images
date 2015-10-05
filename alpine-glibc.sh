@@ -115,6 +115,8 @@ setup_packages
 setup_netconf
 setup_init_helper
 write_manifest
+
+log "Building ACI"
 actool build --overwrite ${aci_dir} ${aci_output}
 
-echo "All done => ${aci_output}"
+log "All done => ${aci_output}"
