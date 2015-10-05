@@ -1,3 +1,12 @@
+#!/bin/bash
+set -e
+source _common.sh
+
+aci_version="1.0.0-1"
+
+#### END CONFIG ####
+
+write_manifest <<EOF
 {
   "acKind": "ImageManifest",
   "acVersion": "0.7.0",
@@ -5,12 +14,12 @@
   "labels": [
     {"name": "os", "value": "linux"},
     {"name": "arch", "value": "amd64"},
-    {"name": "version", "value": "1.0.0"}
+    {"name": "version", "value": "${aci_version}"}
   ],
   "annotations": [
     {"name": "authors", "value": "Daniel Lundin <dln@eintr.org>"},
-    {"name": "created", "value": "2015-10-04T21:22:42Z"},
-    {"name": "description", "value": "Just a test. Starts a shell."}
+    {"name": "created", "value": "${timestamp}"},
+    {"name": "description", "value": "Starts a bash shell"}
   ],
   "dependencies": [
     {
@@ -22,7 +31,7 @@
     }
   ],
   "app": {
-    "exec": ["/bin/sh"],
+    "exec": ["/bin/bash"],
     "user": "0",
     "group": "0",
     "workingDirectory": "/tmp",
@@ -38,4 +47,6 @@
     ]
   }
 }
+EOF
 
+build_aci bash.aci

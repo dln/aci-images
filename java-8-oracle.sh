@@ -1,40 +1,25 @@
 #!/bin/bash
 set -e
+source _common.sh
 
 java_version_major=8
 java_version_minor=60
 java_version_build=27
 
 aci_build=1
+
+#### END CONFIG ####
+
 aci_version="${java_version_major}.${java_version_minor}.${java_version_build}-${aci_build}"
-aci_output=java-${java_version_major}-oracle.aci
-
 jdk_root=/usr/lib/jvm/java-${java_version_major}-oracle
-
-## END CONFIG ##
-
-work_dir=$(mktemp -d /tmp/aci-jdk-tmp.XXXXXX)
-chroot_dir=${work_dir}/rootfs
-
-function cleanup {
-  rm -rf ${chroot_dir}
-}
-trap cleanup EXIT
-
-function log() {
-  echo -e "\e[32m ** " $1 "\e[0m"
-}
-
 jdk_dir=${chroot_dir}${jdk_root}
-
 jdk_url=http://download.oracle.com/otn-pub/java/jdk/${java_version_major}u${java_version_minor}-b${java_version_build}/jdk-${java_version_major}u${java_version_minor}-linux-x64.tar.gz
 
-log "Initializing"
+log "Creating directory structure"
 mkdir -p ${chroot_dir}/usr/lib/jvm/ 
 mkdir -p ${chroot_dir}/usr/bin
 
 log "Downloading JDK distribution"
-log "All done => ${aci_output}"
 curl --progress-bar -jkSLH "Cookie: oraclelicense=accept-securebackup-cookie" ${jdk_url} \
   | tar -xz -P --transform="s,jdk[^/]*,${chroot_dir}${jdk_root}," 
 
@@ -70,8 +55,7 @@ rm -rf \
   ${jdk_dir}/jre/lib/amd64/libjfx*.so
 
 
-log "Writing manifest"
-cat >${work_dir}/manifest <<EOF
+write_manifest <<EOF
 {
   "acKind": "ImageManifest",
   "acVersion": "0.7.0",
@@ -83,13 +67,10 @@ cat >${work_dir}/manifest <<EOF
   ],
   "annotations": [
     {"name": "authors", "value": "Daniel Lundin <dln@eintr.org>"},
-    {"name": "created", "value": "$(TZ=Z date '+%Y-%m-%dT%H:%M:%SZ')"},
+    {"name": "created", "value": "${timestamp}"},
     {"name": "description", "value": "Oracle Java Development Kit ${java_version_major}"}
   ]
 }
 EOF
 
-log "Building ACI"
-actool build ${work_dir} ${aci_output}
-
-log "All done => ${aci_output}"
+build_aci java-${java_version_major}-oracle.aci

@@ -1,3 +1,19 @@
+#!/bin/bash
+set -e
+source _common.sh
+
+aci_version="1.0.4-1"
+
+sbt_extras_revision=master
+
+#### END CONFIG ####
+
+log "Downloading sbt launch script from sbt-extras"
+mkdir -p ${chroot_dir}/usr/bin
+curl -sL https://raw.githubusercontent.com/paulp/sbt-extras/master/sbt > ${chroot_dir}/usr/bin/sbt
+chmod +x ${chroot_dir}/usr/bin/sbt
+
+write_manifest <<EOF
 {
   "acKind": "ImageManifest",
   "acVersion": "0.7.0",
@@ -5,11 +21,11 @@
   "labels": [
     {"name": "os", "value": "linux"},
     {"name": "arch", "value": "amd64"},
-    {"name": "version", "value": "1.0.3"}
+    {"name": "version", "value": "${aci_version}"}
   ],
   "annotations": [
     {"name": "authors", "value": "Daniel Lundin <dln@eintr.org>"},
-    {"name": "created", "value": "2015-10-04T21:22:42Z"},
+    {"name": "created", "value": "${timestamp}"},
     {"name": "description", "value": "The simple/scala/standard build tool"}
   ],
   "dependencies": [
@@ -21,7 +37,7 @@
       ]
     },
     {
-      "imageName": "dln/java8-oracle",
+      "imageName": "dln/java-8-oracle",
       "labels": [
         {"name": "os", "value": "linux"},
         {"name": "arch", "value": "amd64"}
@@ -51,4 +67,6 @@
     ]
   }
 }
+EOF
 
+build_aci sbt.aci
