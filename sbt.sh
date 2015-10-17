@@ -16,8 +16,8 @@ chmod +x ${chroot_dir}/usr/bin/sbt
 write_manifest <<EOF
 {
   "acKind": "ImageManifest",
-  "acVersion": "0.7.0",
-  "name": "dln/sbt",
+  "acVersion": "0.7.1",
+  "name": "localhost/sbt",
   "labels": [
     {"name": "os", "value": "linux"},
     {"name": "arch", "value": "amd64"},
@@ -30,14 +30,14 @@ write_manifest <<EOF
   ],
   "dependencies": [
     {
-      "imageName": "dln/alpine-glibc",
+      "imageName": "localhost/alpine-glibc",
       "labels": [
         {"name": "os", "value": "linux"},
         {"name": "arch", "value": "amd64"}
       ]
     },
     {
-      "imageName": "dln/java-8-oracle",
+      "imageName": "localhost/java-8-oracle",
       "labels": [
         {"name": "os", "value": "linux"},
         {"name": "arch", "value": "amd64"}
@@ -53,14 +53,6 @@ write_manifest <<EOF
       {"name": "resolv-conf", "path": "/etc/resolv.conf"},
       {"name": "work", "path": "/work"},
       {"name": "home", "path": "/root"}
-    ],
-    "eventHandlers": [
-      {
-        "name": "pre-start",
-        "exec": [
-          "/usr/sbin/ac_init_helper"
-        ]
-      }
     ],
     "environment": [
       {"name": "JAVA_HOME", "value": "/usr/lib/jvm/java-8-oracle"}

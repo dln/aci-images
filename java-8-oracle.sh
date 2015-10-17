@@ -58,8 +58,8 @@ rm -rf \
 write_manifest <<EOF
 {
   "acKind": "ImageManifest",
-  "acVersion": "0.7.0",
-  "name": "dln/java-${java_version_major}-oracle",
+  "acVersion": "0.7.1",
+  "name": "localhost/java-${java_version_major}-oracle",
   "labels": [
     {"name": "os", "value": "linux"},
     {"name": "arch", "value": "amd64"},

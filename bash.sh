@@ -9,8 +9,8 @@ aci_version="1.0.0-1"
 write_manifest <<EOF
 {
   "acKind": "ImageManifest",
-  "acVersion": "0.7.0",
-  "name": "dln/bash",
+  "acVersion": "0.7.1",
+  "name": "localhost/bash",
   "labels": [
     {"name": "os", "value": "linux"},
     {"name": "arch", "value": "amd64"},
@@ -23,7 +23,7 @@ write_manifest <<EOF
   ],
   "dependencies": [
     {
-      "imageName": "dln/alpine-glibc",
+      "imageName": "localhost/alpine-glibc",
       "labels": [
         {"name": "os", "value": "linux"},
         {"name": "arch", "value": "amd64"}
