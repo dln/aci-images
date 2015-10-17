@@ -13,6 +13,7 @@ aci_version=${alpine_version}-${aci_build}
 
 apk_mirror=http://nl.alpinelinux.org/alpine
 glibc_apk_url=https://circle-artifacts.com/gh/andyshinn/alpine-pkg-glibc/6/artifacts/0/home/ubuntu/alpine-pkg-glibc/packages/x86_64/glibc-2.21-r2.apk
+glibc_bin_apk_url=https://circle-artifacts.com/gh/andyshinn/alpine-pkg-glibc/6/artifacts/0/home/ubuntu/alpine-pkg-glibc/packages/x86_64/glibc-bin-2.21-r2.apk
 
 #### END CONFIG ####
 
@@ -37,18 +38,6 @@ ethers:         db files
 rpc:            db files
 netgroup:       nis
 EOF
-
-  log "Preparing /etc/hosts"
-  chmod 666 ${chroot_dir}/etc/hosts
-}
-
-function setup_init_helper() {
-  log "Creating ac_init_helper script"
-  cat >${chroot_dir}/usr/sbin/ac_init_helper <<EOF
-#!/bin/sh
-echo "127.0.0.1 \$HOSTNAME localhost localhost.localdomain" >/etc/hosts
-EOF
-  chmod +x ${chroot_dir}/usr/sbin/ac_init_helper
 }
 
 function initialize() {
@@ -66,6 +55,7 @@ function setup_packages() {
 
   log "Downloading glibc package"
   curl -s -L -o ${work_dir}/glibc.apk ${glibc_apk_url}
+  curl -s -L -o ${work_dir}/glibc-bin.apk ${glibc_bin_apk_url}
 
   log "Installing packages"
   ${work_dir}/sbin/apk.static \
@@ -75,19 +65,21 @@ function setup_packages() {
       ca-certificates \
       curl \
       wget \
-      ${work_dir}/glibc.apk
+      ${work_dir}/glibc.apk \
+      ${work_dir}/glibc-bin.apk
+
+  chroot ${chroot_dir} /usr/glibc/usr/bin/ldconfig /lib /usr/glibc/usr/lib
 }
 
 initialize
 setup_packages
 setup_netconf
-setup_init_helper
 
 write_manifest <<EOF
 {
   "acKind": "ImageManifest",
-  "acVersion": "0.7.0",
-  "name": "dln/alpine-glibc",
+  "acVersion": "0.7.1",
+  "name": "localhost/alpine-glibc",
   "labels": [
     {"name": "os", "value": "linux"},
     {"name": "arch", "value": "amd64"},
